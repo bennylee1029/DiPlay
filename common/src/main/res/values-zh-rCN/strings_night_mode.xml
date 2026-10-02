@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carplay_night_mode">CarPlay 日夜模式</string>
+    <string name="carplay_night_system">跟随 Android 系统</string>
+    <string name="carplay_night_ambient">自动（环境光）</string>
+    <string name="carplay_night_day">固定日间</string>
+    <string name="carplay_night_night">固定夜间</string>
+    <string name="carplay_night_hint">保存后返回 CarPlay 即生效，无需重新连接。自动：低于 20 lux 持续 5 秒切换夜间，高于 100 lux 持续 5 秒切换日间。没有光线传感器时跟随 Android。</string>
+</resources>

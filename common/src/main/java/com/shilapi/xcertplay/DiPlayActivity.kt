@@ -278,6 +278,22 @@ class DiPlayActivity : ComponentActivity() {
             card.addView(button("${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}", false) { choosePhone() }, matchButton(12, 60))
         }
         section(content, getString(R.string.display_and_performance), R.drawable.ic_dp_display) { card ->
+            val nightModes = CarPlayNightMode.entries
+            choice(
+                card,
+                getString(R.string.carplay_night_mode),
+                listOf(
+                    getString(R.string.carplay_night_system),
+                    getString(R.string.carplay_night_ambient),
+                    getString(R.string.carplay_night_day),
+                    getString(R.string.carplay_night_night),
+                ),
+                nightModes.indexOf(AirPlayPersistence.loadCarPlayNightMode(this)),
+                reconnects = false,
+            ) { index ->
+                AirPlayPersistence.saveCarPlayNightMode(this, nightModes[index])
+            }
+            card.addView(label(getString(R.string.carplay_night_hint), 14, MUTED))
             carPlaySizeControl(card)
             choice(card, getString(R.string.resolution), listOf(getString(R.string.resolution_native), getString(R.string.s_80_lighter_load), getString(R.string.s_60_lightest_load)), listOf(10, 8, 6).indexOf(AirPlayPersistence.loadDisplayScaleTenths(this)).coerceAtLeast(0)) { AirPlayPersistence.saveDisplayScaleTenths(this, listOf(10, 8, 6)[it]) }
             val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carplay_night_mode">CarPlay day/night mode</string>
+    <string name="carplay_night_system">Follow Android system</string>
+    <string name="carplay_night_ambient">Automatic (ambient light)</string>
+    <string name="carplay_night_day">Always day</string>
+    <string name="carplay_night_night">Always night</string>
+    <string name="carplay_night_hint">Save and return to CarPlay to apply without reconnecting. Automatic: below 20 lux for 5 seconds = night; above 100 lux for 5 seconds = day. Without a light sensor, follows Android.</string>
+</resources>
