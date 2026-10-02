@@ -19,7 +19,7 @@ Connect the iPhone to a USB **data** port with a data-capable cable and choose *
 
 Swipe down with three fingers in CarPlay to open DiPlay settings, or return to the home screen. Icon/text size, resolution and frame rate use **Apply and reconnect** during an active session. A selection alone does not apply; Cancel preserves the old setting. When disconnected, **Save** applies to the next connection. Other settings also apply on the next connection.
 
-Start with 30 fps, Efficient video (HEVC) off and Default icon/text size. Try 80% or 60% resolution for a slower head unit. Some iPhone/head-unit combinations still ignore icon/text scaling.
+Start with 30 fps, Efficient video (HEVC) off and Default icon/text size. Try 80%, 60% or 50% resolution for a slower head unit. Some iPhone/head-unit combinations still ignore icon/text scaling.
 
 ## Connection recovery and reports
 

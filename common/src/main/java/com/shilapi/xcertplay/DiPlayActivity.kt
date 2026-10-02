@@ -295,7 +295,20 @@ class DiPlayActivity : ComponentActivity() {
             }
             card.addView(label(getString(R.string.carplay_night_hint), 14, MUTED))
             carPlaySizeControl(card)
-            choice(card, getString(R.string.resolution), listOf(getString(R.string.resolution_native), getString(R.string.s_80_lighter_load), getString(R.string.s_60_lightest_load)), listOf(10, 8, 6).indexOf(AirPlayPersistence.loadDisplayScaleTenths(this)).coerceAtLeast(0)) { AirPlayPersistence.saveDisplayScaleTenths(this, listOf(10, 8, 6)[it]) }
+            val resolutionScales = listOf(10, 8, 6, 5)
+            choice(
+                card,
+                getString(R.string.resolution),
+                listOf(
+                    getString(R.string.resolution_native),
+                    getString(R.string.s_80_lighter_load),
+                    getString(R.string.s_60_lightest_load),
+                    getString(R.string.s_50_lowest_resolution),
+                ),
+                resolutionScales.indexOf(AirPlayPersistence.loadDisplayScaleTenths(this)).coerceAtLeast(0),
+            ) { index ->
+                AirPlayPersistence.saveDisplayScaleTenths(this, resolutionScales[index])
+            }
             val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets
             choice(card, getString(R.string.music_buffer), listOf(getString(R.string.s_300_ms_default), getString(R.string.s_500_ms), getString(R.string.s_1000_ms_most_stable)),
                 bufferPresets.indexOf(AirPlayPersistence.loadMediaBufferMillis(this)).coerceAtLeast(0)) {
