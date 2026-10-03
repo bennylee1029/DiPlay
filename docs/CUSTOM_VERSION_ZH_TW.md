@@ -9,7 +9,7 @@
 - 套件：`com.shihab.diplay.custom`
 - SHA-256：`8c181fffe6b01cbb82fa158e10d12eb1b5a2406bb3072ac589a2daccb59adc67`
 
-使用者已在 Samsung S22 Ultra 上安裝本次 release，並回報一切正常。
+使用者已在 Samsung Galaxy S22 Ultra 上安裝本次 release，並回報一切正常。
 這是使用自己簽章的獨立正式版，與作者版、debug 版並存，不會覆蓋它們。
 首次安裝需要重新設定偏好；使用時請關閉其他 DiPlay 版本。
 
