@@ -1,7 +1,8 @@
-# Custom CarPlay day/night mode
+# Custom CarPlay display settings
 
-This fork adds a CarPlay-only display setting. Existing licenses, attribution, and
-third-party notices remain in effect. It does not change the Android/Samsung theme.
+This fork adds configurable CarPlay day/night mode, ambient light threshold and transition delay,
+resolution, and a responsive preparation screen. Existing licenses, attribution, and third-party
+notices remain in effect. These settings do not change the Android/Samsung theme.
 
 ## Use
 
