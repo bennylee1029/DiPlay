@@ -997,10 +997,16 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         root.addView(video, FrameLayout.LayoutParams(-1, -1))
         root.addView(gestureLayer, FrameLayout.LayoutParams(-1, -1))
-        // Keep the preparation controls inside the safe viewport, including short landscape
-        // displays. Scrolling also preserves access with large system fonts or longer translations.
-        val viewport = ScrollView(this).apply {
-            isFillViewport = true
+        // Measure the preparation content naturally, then fit it inside the safe viewport.
+        val viewport = object : FrameLayout(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+                getChildAt(0)?.measure(
+                    View.MeasureSpec.makeMeasureSpec((measuredWidth - paddingLeft - paddingRight).coerceAtLeast(0), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                )
+            }
+        }.apply {
             setBackgroundColor(Color.rgb(12, 17, 27))
             isClickable = true
         }
@@ -1058,7 +1064,7 @@ class CarPlayHostActivity : ComponentActivity() {
             setTextColor(Color.rgb(168, 182, 202))
         }
         panel.addView(gestureHint)
-        viewport.addView(panel, FrameLayout.LayoutParams(-1, -2))
+        viewport.addView(panel, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER))
         root.addView(viewport, FrameLayout.LayoutParams(-1, -1))
         var preparationHeight = -1
         fun updatePreparationLayout() {
@@ -1092,7 +1098,19 @@ class CarPlayHostActivity : ComponentActivity() {
             gestureHint.textSize = size(12.5f, 13f)
             gestureHint.setPadding(0, spacing(10f, 20f), 0, 0)
         }
-        viewport.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updatePreparationLayout() }
+        fun fitPreparationContent() {
+            val availableHeight = viewport.height - viewport.paddingTop - viewport.paddingBottom
+            if (panel.height <= 0 || availableHeight <= 0) return
+            val landscape = viewport.width - viewport.paddingLeft - viewport.paddingRight > availableHeight
+            val scale = if (landscape) minOf(1f, availableHeight.toFloat() / panel.height) else 1f
+            panel.scaleX = scale
+            panel.scaleY = scale
+        }
+        panel.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> fitPreparationContent() }
+        viewport.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updatePreparationLayout()
+            fitPreparationContent()
+        }
         ViewCompat.setOnApplyWindowInsetsListener(viewport) { _, insets ->
             val safe = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             viewport.setPadding(safe.left, safe.top, safe.right, safe.bottom)

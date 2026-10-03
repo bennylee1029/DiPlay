@@ -2,7 +2,7 @@ package com.shilapi.xcertplay
 
 import android.view.View
 import android.widget.LinearLayout
-import android.widget.ScrollView
+import android.widget.FrameLayout
 import android.widget.TextView
 import org.junit.Assert.*
 import org.junit.Test
@@ -14,13 +14,13 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], manifest = Config.NONE)
 class PreparationLayoutTest {
-    @Test fun shortAndRegularViewportsKeepAllContentReachable() {
+    @Test fun shortAndRegularViewportsFitWithoutScrolling() {
         // Attach without onCreate: avoid starting sensors, networking or CarPlay sessions.
         val activity = Robolectric.buildActivity(CarPlayHostActivity::class.java).get()
         val method = CarPlayHostActivity::class.java.getDeclaredMethod("buildContentView")
         method.isAccessible = true
         val root = method.invoke(activity) as android.widget.FrameLayout
-        val viewport = root.getChildAt(2) as ScrollView
+        val viewport = root.getChildAt(2) as FrameLayout
         val panel = viewport.getChildAt(0) as LinearLayout
         val density = activity.resources.displayMetrics.density
         fun layout(heightDp: Int) {
@@ -41,9 +41,10 @@ class PreparationLayoutTest {
             }
             val last = panel.getChildAt(panel.childCount - 1)
             assertTrue("height=$heightDp bottom=${last.bottom} padding=${panel.paddingBottom} panel=${panel.height}", last.bottom + panel.paddingBottom <= panel.height)
-            assertTrue(panel.height >= viewport.height)
-            viewport.scrollTo(0, panel.height)
-            assertTrue(last.bottom <= viewport.scrollY + viewport.height)
+            assertEquals(0, viewport.scrollY)
+            val top = panel.top + panel.height * (1f - panel.scaleY) / 2f
+            assertTrue("top=$top height=$heightDp", top >= -1f)
+            assertTrue("bottom height=$heightDp", top + panel.height * panel.scaleY <= viewport.height + 1f)
         }
         for (height in listOf(200, 240, 320, 400, 479, 480, 720)) layout(height)
         assertEquals(34f, (panel.getChildAt(1) as TextView).textSize / activity.resources.displayMetrics.scaledDensity, 0.01f)

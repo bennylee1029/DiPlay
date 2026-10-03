@@ -42,7 +42,7 @@ Existing resolution settings provide the initial value until a custom value is s
 
 The preparation screen interpolates sizes across 240–480 dp of safe viewport height,
 slightly enlarging short-screen content while preserving regular-screen sizes. It adapts to short landscape viewports, respects system-bar and
-display-cutout insets, and scrolls when large fonts or long text exceed the available height.
+display-cutout insets, and scales content to fit when large fonts or long text exceed the available height, without scrolling.
 
 ## Implementation and validation
 
