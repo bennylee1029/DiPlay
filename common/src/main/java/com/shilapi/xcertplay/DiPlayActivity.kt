@@ -936,7 +936,7 @@ class DiPlayActivity : ComponentActivity() {
                     input.error = null
                 }
             }
-            dialog.show()
+            showNumericSettingsDialog(dialog, fields)
         }
         parent.addView(control, matchButton(0, 60))
         parent.addView(space(12))
@@ -985,10 +985,35 @@ class DiPlayActivity : ComponentActivity() {
                     input.error = null
                 }
             }
-            dialog.show()
+            showNumericSettingsDialog(dialog, fields)
         }
         parent.addView(control, matchButton(0, 60))
         parent.addView(space(12))
+    }
+
+    private fun showNumericSettingsDialog(dialog: AlertDialog, fields: LinearLayout) {
+        dialog.show()
+        // AlertDialog replaces the custom view's parameters with MATCH_PARENT. Keep numeric
+        // content at its natural height, including on vendor dialog layouts with weighted panels.
+        fields.layoutParams = fields.layoutParams.apply { height = ViewGroup.LayoutParams.WRAP_CONTENT }
+        val decor = dialog.window?.decorView ?: return
+        var panel = fields.parent as? ViewGroup
+        while (panel != null && panel !== decor) {
+            val params = panel.layoutParams
+            if (params is LinearLayout.LayoutParams && params.weight > 0f) {
+                panel.layoutParams = params.apply {
+                    weight = 0f
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+                break
+            }
+            panel = panel.parent as? ViewGroup
+        }
+        dialog.window?.let { window ->
+            window.setLayout(window.attributes.width, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        // Run another traversal after the platform has finished its initial button measurement.
+        decor.post { if (dialog.isShowing) decor.requestLayout() }
     }
 
     private fun carPlaySizeControl(parent: LinearLayout) {
