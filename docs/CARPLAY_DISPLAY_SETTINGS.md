@@ -13,7 +13,7 @@ The adjacent Ambient light threshold dialog accepts one whole lux value from 1 t
 Reset default fills in 30 lux; tap Save to confirm. The threshold applies only in
 Automatic mode. The adjacent transition delay accepts 0–60 whole seconds (default 2);
 0 switches immediately. Both directions use the saved delay.
-From CarPlay, the existing three-finger downward swipe opens DiPlay settings.
+From CarPlay, swipe down with the configured finger count to open DiPlay settings (default: three fingers).
 
 - Follow Android system (default): uses Android's current day/night configuration.
 - Automatic (ambient light): uses `Sensor.TYPE_LIGHT` while the CarPlay Activity is resumed.
