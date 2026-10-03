@@ -345,7 +345,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var darkMode = false
     private var carPlayNightMode = CarPlayNightMode.SYSTEM
     private var ambientLightThreshold = AmbientLightThreshold()
-    private var ambientDelaySeconds = 5
+    private var ambientDelaySeconds = 2
     private val nightModeController by lazy {
         CarPlayNightModeController(
             light = AndroidAmbientLight(this),
@@ -1002,11 +1002,14 @@ class CarPlayHostActivity : ComponentActivity() {
         panel.addView(hint)
         viewport.addView(panel, FrameLayout.LayoutParams(-1, -2))
         root.addView(viewport, FrameLayout.LayoutParams(-1, -1))
-        var compactLayout: Boolean? = null
+        var preparationHeight = -1
         fun updatePreparationLayout() {
             val height = viewport.height - viewport.paddingTop - viewport.paddingBottom
             if (height <= 0) return
-            val compact = height < dp(480)
+            // Interpolate within the short viewport range; keep regular screens at their existing size.
+            val fraction = ((height.toFloat() / resources.displayMetrics.density - 240f) / 240f).coerceIn(0f, 1f)
+            fun size(short: Float, regular: Float) = short + (regular - short) * fraction
+            fun spacing(short: Float, regular: Float) = dp(size(short, regular).toInt())
             val availableWidth = viewport.width - viewport.paddingLeft - viewport.paddingRight - dp(48)
             val buttonWidth = minOf(dp(300), availableWidth.coerceAtLeast(dp(48)))
             for (button in listOf(back, recovery)) {
@@ -1014,22 +1017,22 @@ class CarPlayHostActivity : ComponentActivity() {
                     button.layoutParams = button.layoutParams.apply { width = buttonWidth }
                 }
             }
-            if (compactLayout == compact) return
-            compactLayout = compact
-            panel.setPadding(dp(24), dp(if (compact) 16 else 32), dp(24), dp(if (compact) 16 else 32))
-            val iconSize = dp(if (compact) 48 else 88)
+            if (preparationHeight == height) return
+            preparationHeight = height
+            panel.setPadding(dp(24), spacing(16f, 32f), dp(24), spacing(16f, 32f))
+            val iconSize = spacing(54f, 88f)
             icon.layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
-            title.textSize = if (compact) 24f else 34f
-            title.setPadding(0, dp(if (compact) 8 else 18), 0, dp(if (compact) 6 else 14))
-            stage.textSize = if (compact) 18f else 22f
-            instructions.textSize = if (compact) 14f else 17f
-            instructions.setPadding(0, dp(if (compact) 8 else 14), 0, dp(if (compact) 12 else 24))
+            title.textSize = size(26f, 34f)
+            title.setPadding(0, spacing(8f, 18f), 0, spacing(6f, 14f))
+            stage.textSize = size(19f, 22f)
+            instructions.textSize = size(15f, 17f)
+            instructions.setPadding(0, spacing(8f, 14f), 0, spacing(12f, 24f))
             for (button in listOf(back, recovery)) {
-                button.textSize = if (compact) 16f else 18f
-                button.layoutParams = button.layoutParams.apply { this.height = dp(if (compact) 48 else 64) }
+                button.textSize = size(17f, 18f)
+                button.layoutParams = button.layoutParams.apply { this.height = spacing(50f, 64f) }
             }
-            hint.textSize = if (compact) 12f else 13f
-            hint.setPadding(0, dp(if (compact) 10 else 20), 0, 0)
+            hint.textSize = size(12.5f, 13f)
+            hint.setPadding(0, spacing(10f, 20f), 0, 0)
         }
         viewport.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updatePreparationLayout() }
         ViewCompat.setOnApplyWindowInsetsListener(viewport) { _, insets ->

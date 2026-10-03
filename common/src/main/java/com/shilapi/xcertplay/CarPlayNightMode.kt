@@ -35,7 +35,7 @@ internal class CarPlayNightModeController(
     private var mode = CarPlayNightMode.SYSTEM
     private var systemNight = initialNight
     private var threshold = AmbientLightThreshold()
-    private var delaySeconds = 5
+    private var delaySeconds = 2
     private var resumed = false
     private var listening = false
     private var pending: Boolean? = null
@@ -51,7 +51,7 @@ internal class CarPlayNightModeController(
         mode: CarPlayNightMode,
         systemNight: Boolean,
         threshold: AmbientLightThreshold = AmbientLightThreshold(),
-        delaySeconds: Int = 5,
+        delaySeconds: Int = 2,
     ) {
         stopListening()
         this.mode = mode

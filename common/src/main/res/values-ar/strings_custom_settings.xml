@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_delay_title">تأخير التبديل</string>
+    <string name="ambient_delay_hint">أدخل من 0 إلى 60 ثانية. الصفر يبدّل فورًا.</string>
+    <string name="custom_resolution_hint">أدخل نسبة من 30 إلى 100. يؤدي التطبيق إلى إعادة اتصال CarPlay.</string>
+    <string name="custom_number_error">أدخل عددًا صحيحًا من %1$d إلى %2$d.</string>
+    <string name="ambient_delay_summary">%1$d ث</string>
+    <string name="custom_resolution_summary">%1$d%%</string>
+</resources>

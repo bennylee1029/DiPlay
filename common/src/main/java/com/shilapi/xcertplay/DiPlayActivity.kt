@@ -294,13 +294,14 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveCarPlayNightMode(this, nightModes[index])
             }
             card.addView(label(getString(R.string.carplay_night_hint), 14, MUTED))
+            card.addView(label(getString(R.string.carplay_night_time_note), 14, MUTED))
             ambientLightThresholdControl(card)
             integerSettingControl(card, R.string.ambient_delay_title, R.string.ambient_delay_hint,
-                0..60, 5, { AirPlayPersistence.loadAmbientDelaySeconds(this) },
+                0..60, 2, R.string.ambient_delay_summary, { AirPlayPersistence.loadAmbientDelaySeconds(this) },
                 save = { AirPlayPersistence.saveAmbientDelaySeconds(this, it) })
             carPlaySizeControl(card)
             integerSettingControl(card, R.string.resolution, R.string.custom_resolution_hint,
-                30..100, 100, { AirPlayPersistence.loadDisplayScalePercent(this) }, reconnects = true,
+                30..100, 100, R.string.custom_resolution_summary, { AirPlayPersistence.loadDisplayScalePercent(this) }, reconnects = true,
                 save = { AirPlayPersistence.saveDisplayScalePercent(this, it) })
             val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets
             choice(card, getString(R.string.music_buffer), listOf(getString(R.string.s_300_ms_default), getString(R.string.s_500_ms), getString(R.string.s_1000_ms_most_stable)),
@@ -892,12 +893,13 @@ class DiPlayActivity : ComponentActivity() {
         hintId: Int,
         range: IntRange,
         default: Int,
+        summaryId: Int,
         load: () -> Int,
         reconnects: Boolean = false,
         save: (Int) -> Unit,
     ) {
         val title = getString(titleId)
-        fun summary() = "$title: ${load()}"
+        fun summary() = getString(R.string.contrib_audio_home_choice_summary, title, getString(summaryId, load()))
         val control = button(summary(), false) {}
         control.setOnClickListener {
             val fields = column().apply { setPadding(dp(24), dp(8), dp(24), dp(8)) }

@@ -8,9 +8,9 @@ third-party notices remain in effect. It does not change the Android/Samsung the
 Open DiPlay → Settings → Display and performance → CarPlay day/night mode.
 Choose an option and tap Save, then return to CarPlay. No reconnect is required.
 The adjacent Ambient light threshold dialog accepts one whole lux value from 1 to
-200000, defaulting to 50 lux. Save persists the value; Cancel keeps the old value.
-Reset default fills in 50 lux; tap Save to confirm. The threshold applies only in
-Automatic mode. The adjacent transition delay accepts 0–60 whole seconds (default 5);
+200000, defaulting to 30 lux. Save persists the value; Cancel keeps the old value.
+Reset default fills in 30 lux; tap Save to confirm. The threshold applies only in
+Automatic mode. The adjacent transition delay accepts 0–60 whole seconds (default 2);
 0 switches immediately. Both directions use the saved delay.
 From CarPlay, the existing three-finger downward swipe opens DiPlay settings.
 
@@ -39,7 +39,8 @@ Applying it reconnects an active CarPlay session through the existing flow.
 Pixel dimensions remain even, and physical dimensions are preserved.
 Existing resolution settings provide the initial value until a custom value is saved.
 
-The preparation screen adapts to short landscape viewports, respects system-bar and
+The preparation screen interpolates sizes across 240–480 dp of safe viewport height,
+slightly enlarging short-screen content while preserving regular-screen sizes. It adapts to short landscape viewports, respects system-bar and
 display-cutout insets, and scrolls when large fonts or long text exceed the available height.
 
 ## Implementation and validation

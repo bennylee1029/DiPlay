@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="ambient_light_threshold_title">環境光切換門檻</string>
-    <string name="ambient_light_threshold_summary">%1$d lux</string>
-    <string name="ambient_light_threshold_value">切換門檻（lux）</string>
-    <string name="ambient_light_threshold_hint">自動模式：低於門檻為夜間，等於或高於門檻為日間。光線必須持續位於新狀態一側 設定的延遲時間才切換。請輸入 1–200000 的整數。</string>
-    <string name="ambient_light_threshold_error">請輸入 1–200000 的整數。</string>
-    <string name="ambient_light_reset_defaults">恢復預設值</string>
-</resources>

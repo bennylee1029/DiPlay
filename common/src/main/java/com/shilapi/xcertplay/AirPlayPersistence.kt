@@ -92,7 +92,7 @@ object AirPlayPersistence {
 
     fun loadAmbientDelaySeconds(context: Context): Int =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt("ambient_delay_seconds", 5).coerceIn(0, 60)
+            .getInt("ambient_delay_seconds", 2).coerceIn(0, 60)
 
     fun saveAmbientDelaySeconds(context: Context, seconds: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()

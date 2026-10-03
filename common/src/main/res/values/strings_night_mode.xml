@@ -5,5 +5,6 @@
     <string name="carplay_night_ambient">Automatic (ambient light)</string>
     <string name="carplay_night_day">Always day</string>
     <string name="carplay_night_night">Always night</string>
-    <string name="carplay_night_hint">Save and return to CarPlay to apply without reconnecting. Automatic mode uses the ambient light threshold below and waits 5 seconds before switching. Without a light sensor, follows Android.</string>
+    <string name="carplay_night_hint">Save and return to CarPlay to apply. Automatic mode uses the threshold and delay below; without a light sensor, it follows Android.</string>
+    <string name="carplay_night_time_note">CarPlay Automatic also uses iPhone time: at night, Always day may still appear dark.</string>
 </resources>

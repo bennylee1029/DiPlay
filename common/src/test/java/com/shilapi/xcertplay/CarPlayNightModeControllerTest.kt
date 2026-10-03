@@ -42,7 +42,7 @@ class CarPlayNightModeControllerTest {
         val output = mutableListOf<Boolean>()
         val controller = CarPlayNightModeController(light, clock, initialNight, output::add)
         init {
-            controller.configure(CarPlayNightMode.AMBIENT, initialNight)
+            controller.configure(CarPlayNightMode.AMBIENT, initialNight, AmbientLightThreshold(50), 5)
             controller.resume(initialNight)
         }
     }
@@ -195,7 +195,7 @@ class CarPlayNightModeControllerTest {
 
     @Test fun customThresholdControlsBothDirectionsWithoutADeadBand() {
         val f = Fixture()
-        f.controller.configure(CarPlayNightMode.AMBIENT, false, AmbientLightThreshold(200))
+        f.controller.configure(CarPlayNightMode.AMBIENT, false, AmbientLightThreshold(200), 5)
         f.light.emit(150f)
         f.clock.advance(5_000)
         assertTrue(f.controller.night)
@@ -208,7 +208,7 @@ class CarPlayNightModeControllerTest {
         val f = Fixture()
         f.light.emit(10f)
         f.clock.advance(4_000)
-        f.controller.configure(CarPlayNightMode.AMBIENT, false, AmbientLightThreshold(5))
+        f.controller.configure(CarPlayNightMode.AMBIENT, false, AmbientLightThreshold(5), 5)
         f.clock.advance(2_000)
         assertFalse(f.controller.night)
         f.light.emit(4f)
@@ -223,6 +223,21 @@ class CarPlayNightModeControllerTest {
         assertEquals(CarPlayNightMode.SYSTEM, CarPlayNightMode.fromKey(null))
         assertEquals(CarPlayNightMode.SYSTEM, CarPlayNightMode.fromKey("future-mode"))
     }
+    @Test fun defaultThresholdAndDelayApplyInBothDirections() {
+        val f = Fixture()
+        f.controller.configure(CarPlayNightMode.AMBIENT, false)
+        f.light.emit(29f)
+        f.clock.advance(1_999)
+        assertFalse(f.controller.night)
+        f.clock.advance(1)
+        assertTrue(f.controller.night)
+        f.light.emit(30f)
+        f.clock.advance(1_999)
+        assertTrue(f.controller.night)
+        f.clock.advance(1)
+        assertFalse(f.controller.night)
+    }
+
     @Test fun customDelayAppliesInBothDirections() {
         val f = Fixture()
         f.controller.configure(CarPlayNightMode.AMBIENT, false, delaySeconds = 1)
