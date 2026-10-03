@@ -294,7 +294,9 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveCarPlayNightMode(this, nightModes[index])
             }
             card.addView(label(getString(R.string.carplay_night_hint), 14, MUTED))
-            card.addView(label(getString(R.string.carplay_night_time_note), 14, MUTED))
+            card.addView(label(getString(R.string.carplay_night_time_note), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(18))
+            })
             ambientLightThresholdControl(card)
             integerSettingControl(card, R.string.ambient_delay_title, R.string.ambient_delay_hint,
                 0..60, 2, R.string.ambient_delay_summary, { AirPlayPersistence.loadAmbientDelaySeconds(this) },
@@ -936,7 +938,7 @@ class DiPlayActivity : ComponentActivity() {
             }
             dialog.show()
         }
-        parent.addView(control, matchButton(12, 60))
+        parent.addView(control, matchButton(0, 60))
         parent.addView(space(12))
     }
 
@@ -985,7 +987,7 @@ class DiPlayActivity : ComponentActivity() {
             }
             dialog.show()
         }
-        parent.addView(control, matchButton(12, 60))
+        parent.addView(control, matchButton(0, 60))
         parent.addView(space(12))
     }
 
