@@ -46,6 +46,8 @@ android {
             optimization {
                 enable = false
             }
+            applicationIdSuffix = ".custom"
+            versionNameSuffix = "-ambient-custom"
             signingConfig = signingConfigs.getByName("release")
         }
     }

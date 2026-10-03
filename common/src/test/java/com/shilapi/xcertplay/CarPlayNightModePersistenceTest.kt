@@ -23,6 +23,23 @@ class CarPlayNightModePersistenceTest {
         assertEquals(CarPlayNightMode.SYSTEM, AirPlayPersistence.loadCarPlayNightMode(context))
     }
 
+    @Test fun thresholdDefaultAndCustomValuePersist() {
+        assertEquals(AmbientLightThreshold(), AirPlayPersistence.loadAmbientLightThreshold(context))
+        AirPlayPersistence.saveCarPlayNightMode(context, CarPlayNightMode.AMBIENT)
+        AirPlayPersistence.saveAmbientLightThreshold(context, AmbientLightThreshold(200))
+        assertEquals(AmbientLightThreshold(200), AirPlayPersistence.loadAmbientLightThreshold(context))
+        assertEquals(CarPlayNightMode.AMBIENT, AirPlayPersistence.loadCarPlayNightMode(context))
+        AirPlayPersistence.saveAmbientLightThreshold(context, AmbientLightThreshold())
+        assertEquals(AmbientLightThreshold(), AirPlayPersistence.loadAmbientLightThreshold(context))
+    }
+
+    @Test fun invalidStoredThresholdRestoresTheDefault() {
+        for (lux in listOf(-1, 0, 200_001)) {
+            prefs.edit().putInt("ambient_lux_threshold", lux).apply()
+            assertEquals(AmbientLightThreshold(), AirPlayPersistence.loadAmbientLightThreshold(context))
+        }
+    }
+
     @Test fun allFourModesRoundTripWithoutChangingOtherPreferences() {
         AirPlayPersistence.saveFps(context, 60)
         for (mode in CarPlayNightMode.entries) {
@@ -31,4 +48,20 @@ class CarPlayNightModePersistenceTest {
             assertEquals(60, AirPlayPersistence.loadFps(context))
         }
     }
+    @Test fun customPercentMigratesOldSettingsAndSurvivesLegacySettingsSave() {
+        AirPlayPersistence.saveDisplayScaleTenths(context, 6)
+        assertEquals(60, AirPlayPersistence.loadDisplayScalePercent(context))
+        AirPlayPersistence.saveDisplayScalePercent(context, 55)
+        AirPlayPersistence.saveDisplayScaleTenths(context, 6)
+        assertEquals(55, AirPlayPersistence.loadDisplayScalePercent(context))
+    }
+
+    @Test fun transitionDelayPersistsIncludingImmediateSwitching() {
+        assertEquals(5, AirPlayPersistence.loadAmbientDelaySeconds(context))
+        AirPlayPersistence.saveAmbientDelaySeconds(context, 1)
+        assertEquals(1, AirPlayPersistence.loadAmbientDelaySeconds(context))
+        AirPlayPersistence.saveAmbientDelaySeconds(context, 0)
+        assertEquals(0, AirPlayPersistence.loadAmbientDelaySeconds(context))
+    }
+
 }

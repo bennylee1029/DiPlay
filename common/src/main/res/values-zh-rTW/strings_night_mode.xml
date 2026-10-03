@@ -5,5 +5,5 @@
     <string name="carplay_night_ambient">自動（環境光）</string>
     <string name="carplay_night_day">固定日間</string>
     <string name="carplay_night_night">固定夜間</string>
-    <string name="carplay_night_hint">儲存後返回 CarPlay 即生效，無需重新連線。自動：低於 20 lux 持續 5 秒切換夜間，高於 100 lux 持續 5 秒切換日間。沒有光感測器時跟隨 Android。</string>
+    <string name="carplay_night_hint">儲存後返回 CarPlay 即生效，無需重新連線。自動模式使用下方環境光切換門檻，持續 5 秒後才切換。沒有光感測器時跟隨 Android。</string>
 </resources>

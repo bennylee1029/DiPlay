@@ -34,6 +34,8 @@ internal class CarPlayNightModeController(
         private set
     private var mode = CarPlayNightMode.SYSTEM
     private var systemNight = initialNight
+    private var threshold = AmbientLightThreshold()
+    private var delaySeconds = 5
     private var resumed = false
     private var listening = false
     private var pending: Boolean? = null
@@ -45,10 +47,17 @@ internal class CarPlayNightModeController(
         }
     }
 
-    fun configure(mode: CarPlayNightMode, systemNight: Boolean) {
+    fun configure(
+        mode: CarPlayNightMode,
+        systemNight: Boolean,
+        threshold: AmbientLightThreshold = AmbientLightThreshold(),
+        delaySeconds: Int = 5,
+    ) {
         stopListening()
         this.mode = mode
         this.systemNight = systemNight
+        this.threshold = threshold
+        this.delaySeconds = delaySeconds.coerceIn(0, 60)
         applyMode()
     }
 
@@ -93,15 +102,18 @@ internal class CarPlayNightModeController(
         if (!resumed || !listening || mode != CarPlayNightMode.AMBIENT) return
         val target = when {
             !lux.isFinite() || lux < 0f -> null
-            !night && lux < 20f -> true
-            night && lux > 100f -> false
+            !night && lux < threshold.lux.toFloat() -> true
+            night && lux >= threshold.lux.toFloat() -> false
             else -> null
         }
         if (target == pending) return
         cancelPending()
         pending = target
         // TYPE_LIGHT is commonly on-change: a stable reading need not emit again.
-        if (target != null) scheduler.postDelayed(transition, 5_000L)
+        if (target != null) {
+            if (delaySeconds == 0) transition.run()
+            else scheduler.postDelayed(transition, delaySeconds * 1_000L)
+        }
     }
 
     private fun stopListening() {

@@ -7,6 +7,11 @@ third-party notices remain in effect. It does not change the Android/Samsung the
 
 Open DiPlay → Settings → Display and performance → CarPlay day/night mode.
 Choose an option and tap Save, then return to CarPlay. No reconnect is required.
+The adjacent Ambient light threshold dialog accepts one whole lux value from 1 to
+200000, defaulting to 50 lux. Save persists the value; Cancel keeps the old value.
+Reset default fills in 50 lux; tap Save to confirm. The threshold applies only in
+Automatic mode. The adjacent transition delay accepts 0–60 whole seconds (default 5);
+0 switches immediately. Both directions use the saved delay.
 From CarPlay, the existing three-finger downward swipe opens DiPlay settings.
 
 - Follow Android system (default): uses Android's current day/night configuration.
@@ -15,10 +20,10 @@ From CarPlay, the existing three-finger downward swipe opens DiPlay settings.
 - Always night: sends `true` to CarPlay.
 
 Automatic mode starts with the current CarPlay state (Android state on a fresh launch).
-While day is active, below 20 lux continuously for five seconds switches to night.
-While night is active, above 100 lux continuously for five seconds switches to day.
-Exactly 20 and 100 lux, and values between them, preserve the current state and cancel
-any pending transition. Invalid readings also cancel pending transitions.
+Below the configured threshold continuously for the configured delay selects night.
+At or above it continuously for the configured delay selects day. There is no intermediate
+lux range. Crossing back before the configured delay cancels the pending transition;
+invalid readings also cancel it. A new crossing starts a fresh observation interval.
 A delayed callback supports on-change sensors that emit nothing while light is stable.
 
 Pausing or destroying the Activity unregisters the listener and cancels its timer.
@@ -26,6 +31,16 @@ Resuming starts a fresh observation interval, retaining the previous day/night s
 Without a light sensor, or when registration fails, automatic mode follows Android.
 When CarPlay is in the background, ambient observation pauses and its last state remains.
 Settings save through the existing SharedPreferences store and survive app restarts.
+
+## Custom resolution and preparation screen
+
+Resolution accepts any integer percentage from 30 to 100, including 55 or 65.
+Applying it reconnects an active CarPlay session through the existing flow.
+Pixel dimensions remain even, and physical dimensions are preserved.
+Existing resolution settings provide the initial value until a custom value is saved.
+
+The preparation screen adapts to short landscape viewports, respects system-bar and
+display-cutout insets, and scrolls when large fonts or long text exceed the available height.
 
 ## Implementation and validation
 
@@ -44,7 +59,7 @@ Run the controller/persistence tests, Android lint, and identity-free debug buil
 No private accessory identity or release signing key is needed for source tests.
 A source-only debug APK is not a provisioned standalone CarPlay receiver.
 Hardware checks still need an Android light sensor and a connected iPhone: cover/uncover
-the sensor, interrupt the five-second window, switch all four modes, pause/resume, and
+the sensor, interrupt the configured observation window, switch all four modes, pause/resume, and
 reconnect while a selected mode is pending. Verify Android's own theme stays unchanged.
 
 ## Keep up with upstream

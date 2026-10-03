@@ -1,0 +1,6 @@
+<resources>
+    <string name="ambient_delay_title">日夜切换延迟（秒）</string>
+    <string name="ambient_delay_hint">请输入 0–60 秒，0 表示立即切换。</string>
+    <string name="custom_resolution_hint">请输入 30–100 的整数百分比，例如 55 或 65。应用后重新连接 CarPlay。</string>
+    <string name="custom_number_error">请输入 %1$d–%2$d 的整数。</string>
+</resources>

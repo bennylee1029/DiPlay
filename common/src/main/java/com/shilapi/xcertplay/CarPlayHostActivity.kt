@@ -46,6 +46,7 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -343,6 +344,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private var latestStage = "Preparing CarPlay"
     private var darkMode = false
     private var carPlayNightMode = CarPlayNightMode.SYSTEM
+    private var ambientLightThreshold = AmbientLightThreshold()
+    private var ambientDelaySeconds = 5
     private val nightModeController by lazy {
         CarPlayNightModeController(
             light = AndroidAmbientLight(this),
@@ -487,9 +490,13 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun loadPersistedSettings() {
         carPlayNightMode = AirPlayPersistence.loadCarPlayNightMode(this)
+        ambientLightThreshold = AirPlayPersistence.loadAmbientLightThreshold(this)
+        ambientDelaySeconds = AirPlayPersistence.loadAmbientDelaySeconds(this)
         nightModeController.configure(
             carPlayNightMode,
             nightModeOrNull(resources.configuration.uiMode) ?: false,
+            ambientLightThreshold,
+            ambientDelaySeconds,
         )
         displayScaleTenths = AirPlayPersistence.loadDisplayScaleTenths(this)
         // Size is now chosen only through CarPlaySize; ignore the canvas scale older builds stored.
@@ -631,10 +638,14 @@ class CarPlayHostActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         val savedNightMode = AirPlayPersistence.loadCarPlayNightMode(this)
+        val savedThreshold = AirPlayPersistence.loadAmbientLightThreshold(this)
+        val savedDelay = AirPlayPersistence.loadAmbientDelaySeconds(this)
         val systemNight = nightModeOrNull(resources.configuration.uiMode) ?: false
-        if (savedNightMode != carPlayNightMode) {
+        if (savedNightMode != carPlayNightMode || savedThreshold != ambientLightThreshold || savedDelay != ambientDelaySeconds) {
             carPlayNightMode = savedNightMode
-            nightModeController.configure(carPlayNightMode, systemNight)
+            ambientLightThreshold = savedThreshold
+            ambientDelaySeconds = savedDelay
+            nightModeController.configure(carPlayNightMode, systemNight, ambientLightThreshold, ambientDelaySeconds)
         }
         nightModeController.resume(systemNight)
         val languagePreference = AppLocale.preference(this)
@@ -928,53 +939,110 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         root.addView(video, FrameLayout.LayoutParams(-1, -1))
         root.addView(gestureLayer, FrameLayout.LayoutParams(-1, -1))
-        val panel = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(dp(32), dp(32), dp(32), dp(32))
+        // Keep the preparation controls inside the safe viewport, including short landscape
+        // displays. Scrolling also preserves access with large system fonts or longer translations.
+        val viewport = ScrollView(this).apply {
+            isFillViewport = true
             setBackgroundColor(Color.rgb(12, 17, 27))
             isClickable = true
         }
-        panel.addView(ImageView(this).apply {
-            setImageResource(R.drawable.ic_carplay); contentDescription = getString(R.string.carplay)
-        }, LinearLayout.LayoutParams(dp(88), dp(88)))
-        panel.addView(TextView(this).apply {
-            text = getString(R.string.diplay); textSize = 34f; setTextColor(Color.rgb(241, 245, 252))
-            gravity = Gravity.CENTER; setPadding(0, dp(18), 0, dp(14))
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+        }
+        val icon = ImageView(this).apply {
+            setImageResource(R.drawable.ic_carplay)
+            contentDescription = getString(R.string.carplay)
+        }
+        panel.addView(icon, LinearLayout.LayoutParams(dp(88), dp(88)))
+        val title = TextView(this).apply {
+            text = getString(R.string.diplay)
+            setTextColor(Color.rgb(241, 245, 252))
+            gravity = Gravity.CENTER
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-        })
+        }
+        panel.addView(title)
         val stage = TextView(this).apply {
-            text = getString(R.string.getting_carplay_ready); textSize = 22f; gravity = Gravity.CENTER
+            text = getString(R.string.getting_carplay_ready)
+            gravity = Gravity.CENTER
             setTextColor(Color.rgb(241, 245, 252))
         }
         panel.addView(stage)
-        panel.addView(TextView(this).apply {
+        val instructions = TextView(this).apply {
             text = if (wirelessEnabled) getString(R.string.keep_your_iphone_nearby_with_bluetooth_and_wi_fi_on_allow)
                 else getString(R.string.use_a_usb_data_cable_and_unlock_your_iphone_allow_trust_an)
-            textSize = 17f; gravity = Gravity.CENTER; setTextColor(Color.rgb(168, 182, 202))
-            setPadding(0, dp(14), 0, dp(24))
-        })
-        panel.addView(Button(this).apply {
-            text = getString(R.string.reset_carplay_wi_fi); isAllCaps = false; textSize = 18f
+            gravity = Gravity.CENTER
+            setTextColor(Color.rgb(168, 182, 202))
+        }
+        panel.addView(instructions)
+        val recovery = Button(this).apply {
+            text = getString(R.string.reset_carplay_wi_fi)
+            isAllCaps = false
             visibility = View.GONE
             setOnClickListener { showDiPlayHome("wireless-recovery") }
             wifiRecoveryButton = this
-        }, LinearLayout.LayoutParams(dp(300), dp(64)).apply { bottomMargin = dp(12) })
-        panel.addView(Button(this).apply {
-            text = getString(R.string.back_to_diplay); isAllCaps = false; textSize = 18f
+        }
+        panel.addView(recovery, LinearLayout.LayoutParams(dp(300), dp(64)).apply { bottomMargin = dp(12) })
+        val back = Button(this).apply {
+            text = getString(R.string.back_to_diplay)
+            isAllCaps = false
             setTextColor(Color.rgb(12, 17, 27))
-            background = GradientDrawable().apply { setColor(Color.rgb(166, 200, 255)); cornerRadius = dp(20).toFloat() }
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(166, 200, 255))
+                cornerRadius = dp(20).toFloat()
+            }
             setOnClickListener { showDiPlayHome() }
-        }, LinearLayout.LayoutParams(dp(300), dp(64)))
-        panel.addView(TextView(this).apply {
+        }
+        panel.addView(back, LinearLayout.LayoutParams(dp(300), dp(64)))
+        val hint = TextView(this).apply {
             text = getString(R.string.in_carplay_swipe_down_with_three_fingers_to_open_diplay_se)
-            textSize = 13f; gravity = Gravity.CENTER; setTextColor(Color.rgb(168, 182, 202)); setPadding(0, dp(20), 0, 0)
-        })
-        root.addView(panel, FrameLayout.LayoutParams(-1, -1))
+            gravity = Gravity.CENTER
+            setTextColor(Color.rgb(168, 182, 202))
+        }
+        panel.addView(hint)
+        viewport.addView(panel, FrameLayout.LayoutParams(-1, -2))
+        root.addView(viewport, FrameLayout.LayoutParams(-1, -1))
+        var compactLayout: Boolean? = null
+        fun updatePreparationLayout() {
+            val height = viewport.height - viewport.paddingTop - viewport.paddingBottom
+            if (height <= 0) return
+            val compact = height < dp(480)
+            val availableWidth = viewport.width - viewport.paddingLeft - viewport.paddingRight - dp(48)
+            val buttonWidth = minOf(dp(300), availableWidth.coerceAtLeast(dp(48)))
+            for (button in listOf(back, recovery)) {
+                if (button.layoutParams.width != buttonWidth) {
+                    button.layoutParams = button.layoutParams.apply { width = buttonWidth }
+                }
+            }
+            if (compactLayout == compact) return
+            compactLayout = compact
+            panel.setPadding(dp(24), dp(if (compact) 16 else 32), dp(24), dp(if (compact) 16 else 32))
+            val iconSize = dp(if (compact) 48 else 88)
+            icon.layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
+            title.textSize = if (compact) 24f else 34f
+            title.setPadding(0, dp(if (compact) 8 else 18), 0, dp(if (compact) 6 else 14))
+            stage.textSize = if (compact) 18f else 22f
+            instructions.textSize = if (compact) 14f else 17f
+            instructions.setPadding(0, dp(if (compact) 8 else 14), 0, dp(if (compact) 12 else 24))
+            for (button in listOf(back, recovery)) {
+                button.textSize = if (compact) 16f else 18f
+                button.layoutParams = button.layoutParams.apply { this.height = dp(if (compact) 48 else 64) }
+            }
+            hint.textSize = if (compact) 12f else 13f
+            hint.setPadding(0, dp(if (compact) 10 else 20), 0, 0)
+        }
+        viewport.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updatePreparationLayout() }
+        ViewCompat.setOnApplyWindowInsetsListener(viewport) { _, insets ->
+            val safe = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            viewport.setPadding(safe.left, safe.top, safe.right, safe.bottom)
+            viewport.post { updatePreparationLayout() }
+            insets
+        }
+        ViewCompat.requestApplyInsets(viewport)
         videoView = video
         gestureOverlay = gestureLayer
         stageStatusView = stage
-        connectionPanel = panel
+        connectionPanel = viewport
         updateDebugOverlays()
         return root
     }
@@ -1198,7 +1266,7 @@ class CarPlayHostActivity : ComponentActivity() {
             LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
         )
         val resolutionValue = menuText(
-            CarPlayDisplayScale.label(displayScaleTenths),
+            "${AirPlayPersistence.loadDisplayScalePercent(this)}%",
             28f,
             MENU_ACCENT,
             bold = true,
@@ -1230,6 +1298,7 @@ class CarPlayHostActivity : ComponentActivity() {
                         displayScaleTenths = CarPlayDisplayScale.sanitize(
                             CarPlayDisplayScale.MIN_TENTHS + progress,
                         )
+                        if (fromUser) AirPlayPersistence.saveDisplayScalePercent(this@CarPlayHostActivity, displayScaleTenths * 10)
                         updateResolutionMenu()
                     }
 
@@ -2760,19 +2829,19 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun updateResolutionMenu() {
-        resolutionValueView?.text = CarPlayDisplayScale.label(displayScaleTenths)
+        resolutionValueView?.text = "${AirPlayPersistence.loadDisplayScalePercent(this)}%"
         val native = activeDisplaySize ?: currentActivitySize()
         val resolution = if (native == null) {
             getString(R.string.handshake_resolution_waiting_for_display)
         } else {
-            val negotiated = CarPlayDisplayScale.apply(
+            val negotiated = CarPlayDisplayScale.applyPercent(
                 AirPlayDisplayConfig(
                     widthPixels = native.width,
                     heightPixels = native.height,
                     widthPhysicalMm = widthPhysicalMm,
                     fps = fps,
                 ),
-                displayScaleTenths,
+                AirPlayPersistence.loadDisplayScalePercent(this),
             )
             "${getString(R.string.resolution_handshake_prefix)}${native.width} x ${native.height} -> " +
                 "${negotiated.widthPixels} x ${negotiated.heightPixels}"
@@ -2872,7 +2941,7 @@ class CarPlayHostActivity : ComponentActivity() {
             heightPhysicalMm = physical.heightMm,
             fps = fps,
         )
-        val resolutionDisplay = CarPlayDisplayScale.apply(baseDisplay, displayScaleTenths)
+        val resolutionDisplay = CarPlayDisplayScale.applyPercent(baseDisplay, AirPlayPersistence.loadDisplayScalePercent(this))
         val requestedPercent = uiScalePercent
         var scaledDisplay = CarPlayUiScale.apply(resolutionDisplay, uiScalePercent)
         val candidate = scaledDisplay
@@ -2904,7 +2973,7 @@ class CarPlayHostActivity : ComponentActivity() {
             safeAreaDrawOutside = safeAreaDrawOutside,
         )
         val requestSummary = "Display request selected=${CarPlayUiScale.label(requestedPercent)} percent=$requestedPercent " +
-            "surface=${size.width}x${size.height} resolution=${displayScaleTenths * 10}% " +
+            "surface=${size.width}x${size.height} resolution=${AirPlayPersistence.loadDisplayScalePercent(this)}% " +
             "base=${resolutionDisplay.widthPixels}x${resolutionDisplay.heightPixels} " +
             "candidate=${candidate.widthPixels}x${candidate.heightPixels} fps=$fps " +
             "codec=${if (hevcEnabled) "HEVC" else "H.264"} softwareHevc=$hevcSoftwareDecoderEnabled"
@@ -3275,7 +3344,7 @@ class CarPlayHostActivity : ComponentActivity() {
         appendLog(
             "Starting CarPlay controller at ${size.width}x${size.height} -> " +
                 "${airPlayConfig.main.widthPixels}x${airPlayConfig.main.heightPixels} " +
-                "(${CarPlayDisplayScale.label(displayScaleTenths)}) " +
+                "(${"${AirPlayPersistence.loadDisplayScalePercent(this)}%"}) " +
                 "physical=${airPlayConfig.main.widthPhysicalMm}x" +
                 "${airPlayConfig.main.heightPhysicalMm}mm " +
                 "video=${if (airPlayConfig.hevc) "HEVC" else "H.264"} " +
@@ -3289,7 +3358,7 @@ class CarPlayHostActivity : ComponentActivity() {
             TAG,
             "starting controller display=${size.width}x${size.height} " +
                 "negotiated=${airPlayConfig.main.widthPixels}x${airPlayConfig.main.heightPixels} " +
-                "scale=${CarPlayDisplayScale.label(displayScaleTenths)} " +
+                "scale=${"${AirPlayPersistence.loadDisplayScalePercent(this)}%"} " +
                 "hevc=${airPlayConfig.hevc} " +
                 "softwareHevc=${airPlayConfig.hevc && hevcSoftwareDecoderEnabled} " +
                 "microphone=${airPlayConfig.microphone} " +
@@ -3584,7 +3653,7 @@ class CarPlayHostActivity : ComponentActivity() {
         logLines.clear()
         appendLog(
             "$prefix; starting a fresh handshake at " +
-                "${CarPlayDisplayScale.label(displayScaleTenths)} with " +
+                "${"${AirPlayPersistence.loadDisplayScalePercent(this)}%"} with " +
                 (if (hevcEnabled) "HEVC (H.265)" else "H.264") +
                 ", MFI ${mfiTargetLabel(mfiTarget)}" +
                 ", Wi-Fi session ${hotspotModeLabel(wirelessHotspotMode)}",

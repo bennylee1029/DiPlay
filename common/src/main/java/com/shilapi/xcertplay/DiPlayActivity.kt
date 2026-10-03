@@ -294,21 +294,14 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveCarPlayNightMode(this, nightModes[index])
             }
             card.addView(label(getString(R.string.carplay_night_hint), 14, MUTED))
+            ambientLightThresholdControl(card)
+            integerSettingControl(card, R.string.ambient_delay_title, R.string.ambient_delay_hint,
+                0..60, 5, { AirPlayPersistence.loadAmbientDelaySeconds(this) },
+                save = { AirPlayPersistence.saveAmbientDelaySeconds(this, it) })
             carPlaySizeControl(card)
-            val resolutionScales = listOf(10, 8, 6, 5)
-            choice(
-                card,
-                getString(R.string.resolution),
-                listOf(
-                    getString(R.string.resolution_native),
-                    getString(R.string.s_80_lighter_load),
-                    getString(R.string.s_60_lightest_load),
-                    getString(R.string.s_50_lowest_resolution),
-                ),
-                resolutionScales.indexOf(AirPlayPersistence.loadDisplayScaleTenths(this)).coerceAtLeast(0),
-            ) { index ->
-                AirPlayPersistence.saveDisplayScaleTenths(this, resolutionScales[index])
-            }
+            integerSettingControl(card, R.string.resolution, R.string.custom_resolution_hint,
+                30..100, 100, { AirPlayPersistence.loadDisplayScalePercent(this) }, reconnects = true,
+                save = { AirPlayPersistence.saveDisplayScalePercent(this, it) })
             val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets
             choice(card, getString(R.string.music_buffer), listOf(getString(R.string.s_300_ms_default), getString(R.string.s_500_ms), getString(R.string.s_1000_ms_most_stable)),
                 bufferPresets.indexOf(AirPlayPersistence.loadMediaBufferMillis(this)).coerceAtLeast(0)) {
@@ -893,6 +886,107 @@ class DiPlayActivity : ComponentActivity() {
             .setNegativeButton(getString(R.string.cancel), null).show()
     }
 
+    private fun integerSettingControl(
+        parent: LinearLayout,
+        titleId: Int,
+        hintId: Int,
+        range: IntRange,
+        default: Int,
+        load: () -> Int,
+        reconnects: Boolean = false,
+        save: (Int) -> Unit,
+    ) {
+        val title = getString(titleId)
+        fun summary() = "$title: ${load()}"
+        val control = button(summary(), false) {}
+        control.setOnClickListener {
+            val fields = column().apply { setPadding(dp(24), dp(8), dp(24), dp(8)) }
+            val input = EditText(this).apply {
+                setSingleLine()
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER
+                setText(load().toString())
+            }
+            fields.addView(input)
+            fields.addView(label(getString(hintId), 14, MUTED))
+            val dialog = AlertDialog.Builder(this).setTitle(title).setView(fields)
+                .setPositiveButton(getString(if (reconnects && CarPlayBackgroundSession.hasSession()) R.string.apply_and_reconnect else R.string.save), null)
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setNeutralButton(getString(R.string.ambient_light_reset_defaults), null).create()
+            dialog.setOnShowListener {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                    val value = input.text.toString().trim().toIntOrNull()
+                    if (value == null || value !in range) {
+                        input.error = getString(R.string.custom_number_error, range.first, range.last)
+                    } else {
+                        val changed = value != load()
+                        save(value)
+                        control.text = summary()
+                        dialog.dismiss()
+                        if (changed && reconnects && CarPlayBackgroundSession.hasSession()) {
+                            connect(AirPlayPersistence.loadWirelessEnabled(this))
+                        }
+                    }
+                }
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                    input.setText(default.toString())
+                    input.error = null
+                }
+            }
+            dialog.show()
+        }
+        parent.addView(control, matchButton(12, 60))
+        parent.addView(space(12))
+    }
+
+    private fun ambientLightThresholdControl(parent: LinearLayout) {
+        val title = getString(R.string.ambient_light_threshold_title)
+        fun summary(): String = getString(
+            R.string.contrib_audio_home_choice_summary,
+            title,
+            getString(R.string.ambient_light_threshold_summary, AirPlayPersistence.loadAmbientLightThreshold(this).lux),
+        )
+
+        val control = button(summary(), false) {}
+        control.setOnClickListener {
+            val fields = column().apply { setPadding(dp(24), dp(8), dp(24), dp(8)) }
+            fields.addView(label(getString(R.string.ambient_light_threshold_value), 16, MUTED))
+            val input = EditText(this).apply {
+                setSingleLine()
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER
+                setText(AirPlayPersistence.loadAmbientLightThreshold(this@DiPlayActivity).lux.toString())
+            }
+            fields.addView(input)
+            fields.addView(label(getString(R.string.ambient_light_threshold_hint), 14, MUTED))
+            val dialog = AlertDialog.Builder(this)
+                .setTitle(title)
+                .setView(fields)
+                .setPositiveButton(getString(R.string.save), null)
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setNeutralButton(getString(R.string.ambient_light_reset_defaults), null)
+                .create()
+
+            dialog.setOnShowListener {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener saveThreshold@{
+                    val lux = input.text.toString().trim().toIntOrNull()
+                    if (lux == null || !AmbientLightThreshold.isValid(lux)) {
+                        input.error = getString(R.string.ambient_light_threshold_error)
+                        return@saveThreshold
+                    }
+                    AirPlayPersistence.saveAmbientLightThreshold(this, AmbientLightThreshold(lux))
+                    control.text = summary()
+                    dialog.dismiss()
+                }
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                    input.setText(AmbientLightThreshold.DEFAULT_LUX.toString())
+                    input.error = null
+                }
+            }
+            dialog.show()
+        }
+        parent.addView(control, matchButton(12, 60))
+        parent.addView(space(12))
+    }
+
     private fun carPlaySizeControl(parent: LinearLayout) {
         val sizes = com.shilapi.xcertplay.airplay.CarPlaySize.entries
         val current = com.shilapi.xcertplay.airplay.CarPlaySize.fromWidthMillimeters(AirPlayPersistence.loadWidthPhysicalMm(this))
@@ -1068,7 +1162,7 @@ class DiPlayActivity : ComponentActivity() {
                     appendLine("CarPlay setup: ${if (setupError == null) "ready" else "authentication unavailable"}")
                     appendLine("Saved video preference (may differ from active session): ${if (AirPlayPersistence.loadHevcEnabled(appContext)) "HEVC" else "H.264"}; ${AirPlayPersistence.loadFps(appContext)} fps")
                     appendLine("CarPlay size: ${com.shilapi.xcertplay.airplay.CarPlaySize.fromWidthMillimeters(AirPlayPersistence.loadWidthPhysicalMm(appContext)).label}")
-                    appendLine("Saved resolution preference (may differ from active session): ${AirPlayPersistence.loadDisplayScaleTenths(appContext) * 10}%")
+                    appendLine("Saved resolution preference (may differ from active session): ${AirPlayPersistence.loadDisplayScalePercent(appContext)}%")
                     appendLine("Session: ${if (CarPlayBackgroundSession.active) "active" else if (CarPlayBackgroundSession.hasSession()) "connecting" else "stopped"}")
                     appendLine("Head-unit board: ${Build.BOARD}; hardware: ${Build.HARDWARE}; build: ${Build.DISPLAY}")
                     appendLine()

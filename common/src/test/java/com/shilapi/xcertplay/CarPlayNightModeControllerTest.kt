@@ -73,20 +73,22 @@ class CarPlayNightModeControllerTest {
         assertEquals(listOf(true), f.output)
     }
 
-    @Test fun boundariesAndDeadBandPreserveBothStates() {
-        for (night in listOf(false, true)) {
-            val f = Fixture(night)
-            for (lux in listOf(20f, 50f, 100f)) {
-                f.light.emit(lux)
-                f.clock.advance(6_000)
-                assertEquals(night, f.controller.night)
-            }
-            assertTrue(f.output.isEmpty())
-        }
+    @Test fun equalitySelectsDayAndBothSidesUseTheDelay() {
+        val f = Fixture(true)
+        f.light.emit(50f)
+        f.clock.advance(4_999)
+        assertTrue(f.controller.night)
+        f.clock.advance(1)
+        assertFalse(f.controller.night)
+        f.light.emit(49f)
+        f.clock.advance(4_999)
+        assertFalse(f.controller.night)
+        f.clock.advance(1)
+        assertTrue(f.controller.night)
     }
 
     @Test fun interruptedOrInvalidReadingRequiresANewFullInterval() {
-        for (reset in listOf(20f, 50f, 100f, 200f, -1f, Float.NaN, Float.POSITIVE_INFINITY)) {
+        for (reset in listOf(50f, 100f, 200f, -1f, Float.NaN, Float.POSITIVE_INFINITY)) {
             val f = Fixture()
             f.light.emit(1f)
             f.clock.advance(4_000)
@@ -161,7 +163,7 @@ class CarPlayNightModeControllerTest {
         assertTrue(f.controller.night)
         f.controller.pause()
         f.controller.resume(false)
-        f.light.emit(50f)
+        f.light.emit(49f)
         f.clock.advance(10_000)
         assertTrue(f.controller.night)
     }
@@ -181,7 +183,7 @@ class CarPlayNightModeControllerTest {
         val f = Fixture(true)
         f.light.emit(101f)
         f.clock.advance(4_000)
-        f.light.emit(100f)
+        f.light.emit(49f)
         f.clock.advance(2_000)
         assertTrue(f.controller.night)
         f.light.emit(101f)
@@ -191,9 +193,61 @@ class CarPlayNightModeControllerTest {
         assertFalse(f.controller.night)
     }
 
+    @Test fun customThresholdControlsBothDirectionsWithoutADeadBand() {
+        val f = Fixture()
+        f.controller.configure(CarPlayNightMode.AMBIENT, false, AmbientLightThreshold(200))
+        f.light.emit(150f)
+        f.clock.advance(5_000)
+        assertTrue(f.controller.night)
+        f.light.emit(200f)
+        f.clock.advance(5_000)
+        assertFalse(f.controller.night)
+    }
+
+    @Test fun changingThresholdCancelsTheOldPendingTransition() {
+        val f = Fixture()
+        f.light.emit(10f)
+        f.clock.advance(4_000)
+        f.controller.configure(CarPlayNightMode.AMBIENT, false, AmbientLightThreshold(5))
+        f.clock.advance(2_000)
+        assertFalse(f.controller.night)
+        f.light.emit(4f)
+        f.clock.advance(4_999)
+        assertFalse(f.controller.night)
+        f.clock.advance(1)
+        assertTrue(f.controller.night)
+    }
+
     @Test fun preferenceKeysAreStableAndUnknownValuesFollowSystem() {
         for (mode in CarPlayNightMode.entries) assertEquals(mode, CarPlayNightMode.fromKey(mode.key))
         assertEquals(CarPlayNightMode.SYSTEM, CarPlayNightMode.fromKey(null))
         assertEquals(CarPlayNightMode.SYSTEM, CarPlayNightMode.fromKey("future-mode"))
     }
+    @Test fun customDelayAppliesInBothDirections() {
+        val f = Fixture()
+        f.controller.configure(CarPlayNightMode.AMBIENT, false, delaySeconds = 1)
+        f.light.emit(10f)
+        f.clock.advance(999)
+        assertFalse(f.controller.night)
+        f.clock.advance(1)
+        assertTrue(f.controller.night)
+        f.light.emit(60f)
+        f.clock.advance(1_000)
+        assertFalse(f.controller.night)
+    }
+
+    @Test fun zeroDelaySwitchesImmediatelyAndReconfigurationCancelsOldTimer() {
+        val f = Fixture()
+        f.light.emit(10f)
+        f.clock.advance(4_000)
+        f.controller.configure(CarPlayNightMode.AMBIENT, false, delaySeconds = 0)
+        f.clock.advance(1_000)
+        assertFalse(f.controller.night)
+        f.light.emit(10f)
+        assertTrue(f.controller.night)
+        assertTrue(f.clock.tasks.isEmpty())
+        f.light.emit(50f)
+        assertFalse(f.controller.night)
+    }
+
 }

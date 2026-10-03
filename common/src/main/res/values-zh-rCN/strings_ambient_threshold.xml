@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_light_threshold_title">环境光切换阈值</string>
+    <string name="ambient_light_threshold_summary">%1$d lux</string>
+    <string name="ambient_light_threshold_value">切换阈值（lux）</string>
+    <string name="ambient_light_threshold_hint">自动模式：低于阈值为夜间，等于或高于阈值为日间。光线必须持续位于新状态一侧 設定的延遲時間才切换。请输入 1–200000 的整数。</string>
+    <string name="ambient_light_threshold_error">请输入 1–200000 的整数。</string>
+    <string name="ambient_light_reset_defaults">恢复默认值</string>
+</resources>
