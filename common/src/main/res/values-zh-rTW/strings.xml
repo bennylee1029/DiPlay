@@ -1016,4 +1016,6 @@
     <string name="settings_cluster_speedometer_album_color_description">平滑過渡至專輯邊框的顏色，並保留所選的不透明度。</string>
     <string name="settings_force_video_in_car">強制宣告支援車內影片（實驗性）</string>
     <string name="settings_force_video_in_car_description">向 iPhone 宣告支援 CarPlay 車內影片並允許播放，不檢查車輛檔位，也不需要 ADB。為了安全，請只在車輛停妥時才打開這個選項。開啟時會優先於 BYD 停車影片的檔位限制。變更於下次連線生效，實際播放能力取決於 iOS 與影片 App。</string>
+    <string name="settings_video_use_iphone_network">影片流量使用 iPhone 網路</string>
+    <string name="settings_video_use_iphone_network_description">開啟時，透過 iPhone 的網路載入影片，車機無須另行連網。關閉時，影片將優先透過車機的網路載入。</string>
 </resources>

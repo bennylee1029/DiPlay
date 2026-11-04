@@ -956,4 +956,6 @@
     <string name="settings_cluster_speedometer_album_color_description">Iguala el color del borde del álbum con transiciones suaves. Conserva la opacidad elegida.</string>
     <string name="settings_force_video_in_car">Forzar compatibilidad con vídeo en el coche (experimental)</string>
     <string name="settings_force_video_in_car_description">Anuncia al iPhone la compatibilidad con vídeo en el coche mediante CarPlay y permite reproducirlo sin comprobar la marcha del vehículo ni necesitar ADB. Por seguridad, activa esta opción solo cuando el vehículo esté aparcado de forma segura. Mientras esté activada, tiene prioridad sobre la restricción de marcha del vídeo de BYD con el coche aparcado. Se aplica en la próxima conexión. La reproducción depende de iOS y de la app de vídeo.</string>
+    <string name="settings_video_use_iphone_network">Usar la red del iPhone para el tráfico de vídeo</string>
+    <string name="settings_video_use_iphone_network_description">Al activar esta opción, los vídeos se cargan mediante la red del iPhone y el receptor no necesita otra conexión a internet. Al desactivarla, los vídeos usarán primero la red del receptor.</string>
 </resources>
