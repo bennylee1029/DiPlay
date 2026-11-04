@@ -1059,4 +1059,6 @@
     <string name="settings_cluster_speedometer_album_color_description">Match the album frame color with smooth transitions. Keeps the selected opacity.</string>
     <string name="settings_force_video_in_car">Force in-car video support (experimental)</string>
     <string name="settings_force_video_in_car_description">Advertise CarPlay in-car video support to the iPhone and allow video playback without checking the vehicle gear or requiring ADB. For safety, enable this option only when the vehicle is safely parked. Overrides the BYD parked-video restriction while enabled. Takes effect on the next connection. Actual playback support depends on iOS and the video app.</string>
+    <string name="settings_video_use_iphone_network">Use iPhone network for video traffic</string>
+    <string name="settings_video_use_iphone_network_description">When enabled, videos load through the iPhone network without a separate internet connection on the receiver. When disabled, videos will use the receiver network first.</string>
 </resources>
