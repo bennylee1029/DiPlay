@@ -5,6 +5,11 @@ import java.io.Closeable
 
 /** iOS 27 video in car, played by the host in the car's own player (see [VideoInCar]). */
 interface CarPlayVideoListener {
+    /** Current persisted setting, read without reconnecting the CarPlay control session. */
+    fun usesIphoneNetworkForVideo(): Boolean = false
+    fun onVideoResourceRejected(streamId: Long, reason: String, bodyBytes: Int) {}
+    /** Claim one pending reply before spooling/posting; late or duplicate replies must be dropped. */
+    fun claimVideoResourceResponse(streamId: Long, requestId: Long): Boolean = false
     /** Whether the car is in P, or null when it cannot tell. Blocking; read once a second while CarPlay runs. */
     fun readParked(): Boolean?
 
@@ -22,19 +27,24 @@ interface CarPlayVideoListener {
 }
 
 /**
- * Keeps [VideoInCar.allowed] in step with the car: allowed only while the gear reads P, so an unknown
- * gear (no ADB) keeps video off. Changes go to [onChanged].
+ * Owns [VideoInCar.allowed]. Normally only P permits video; unknown gear keeps it off.
+ * The explicit connection-scoped override skips gear reads altogether. Changes go to [onChanged].
  */
 internal class VideoInCarGate(
     private val readParked: () -> Boolean?,
     private val onChanged: (Boolean) -> Unit,
     private val onObserved: (Boolean?) -> Unit = {},
+    private val forceVideoInCar: Boolean = false,
 ) : Closeable {
     @Volatile private var closed = false
     private var observed = false
     private var lastParked: Boolean? = null
 
     fun start() {
+        if (forceVideoInCar) {
+            update(null)
+            return
+        }
         Thread({
             while (!closed) {
                 update(runCatching(readParked).getOrNull())
@@ -48,12 +58,12 @@ internal class VideoInCarGate(
     }
 
     internal fun update(parked: Boolean?) {
-        if (!observed || parked != lastParked) {
+        if (!forceVideoInCar && (!observed || parked != lastParked)) {
             observed = true
             lastParked = parked
             onObserved(parked)
         }
-        val allowed = parked == true
+        val allowed = forceVideoInCar || parked == true
         if (allowed == VideoInCar.allowed || closed) return
         VideoInCar.allowed = allowed
         onChanged(allowed)
